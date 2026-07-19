@@ -1,0 +1,86 @@
+// “Desas” — divu spēlētāju spēle, uzrakstīta Latgalītē.
+// Spēlētāji pēc kārtas ievada brīvas rūtiņas numuru no 1 līdz 9.
+
+Funkcija parādīt_laukumu(masīvs laukums) {
+    Izvadīt("");
+    Izvadīt(" " + laukums[0] + " | " + laukums[1] + " | " + laukums[2]);
+    Izvadīt("---+---+---");
+    Izvadīt(" " + laukums[3] + " | " + laukums[4] + " | " + laukums[5]);
+    Izvadīt("---+---+---");
+    Izvadīt(" " + laukums[6] + " | " + laukums[7] + " | " + laukums[8]);
+    Izvadīt("");
+    Atgriezt 0;
+}
+
+Funkcija trīs_vienādi(
+    masīvs laukums,
+    skaitlis a,
+    skaitlis b,
+    skaitlis c,
+    teksts zīme
+) {
+    Atgriezt laukums[a] ir vienāds ar zīme
+        un laukums[b] ir vienāds ar zīme
+        un laukums[c] ir vienāds ar zīme;
+}
+
+Funkcija ir_uzvara(masīvs laukums, teksts zīme) {
+    Atgriezt
+        trīs_vienādi(laukums, 0, 1, 2, zīme)
+        vai trīs_vienādi(laukums, 3, 4, 5, zīme)
+        vai trīs_vienādi(laukums, 6, 7, 8, zīme)
+        vai trīs_vienādi(laukums, 0, 3, 6, zīme)
+        vai trīs_vienādi(laukums, 1, 4, 7, zīme)
+        vai trīs_vienādi(laukums, 2, 5, 8, zīme)
+        vai trīs_vienādi(laukums, 0, 4, 8, zīme)
+        vai trīs_vienādi(laukums, 2, 4, 6, zīme);
+}
+
+Mainīgais masīvs laukums ir ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+Mainīgais teksts spēlētājs ir "X";
+Mainīgais skaitlis gājieni ir 0;
+Mainīgais loģisks spēle_beigusies ir aplams;
+
+Izvadīt("DESAS");
+Izvadīt("Divi spēlētāji: X un O.");
+
+Kamēr(nav spēle_beigusies) {
+    parādīt_laukumu(laukums);
+    Izvadīt("Spēlētāj " + spēlētājs + ", izvēlies brīvu rūtiņu (1-9):");
+    Mainīgais teksts izvēle ir ievadīt();
+
+    // Meklē ievadīto numuru starp vēl neaizņemtajām rūtiņām.
+    Mainīgais skaitlis atrastā_rūtiņa ir -1;
+    Mainīgais skaitlis i ir 0;
+    Kamēr(i mazāks par garums(laukums)) {
+        Ja(laukums[i] ir vienāds ar izvēle) {
+            atrastā_rūtiņa ir i;
+        }
+        i pieskaitīt 1;
+    }
+
+    Ja(atrastā_rūtiņa mazāks par 0) {
+        Izvadīt("Nederīgs gājiens — mēģini vēlreiz.");
+    } Citādi {
+        laukums[atrastā_rūtiņa] ir spēlētājs;
+        gājieni pieskaitīt 1;
+
+        Ja(ir_uzvara(laukums, spēlētājs)) {
+            parādīt_laukumu(laukums);
+            Izvadīt("Spēlētājs " + spēlētājs + " uzvarēja!");
+            spēle_beigusies ir patiess;
+        } Citādi {
+            Ja(gājieni ir vienāds ar 9) {
+                parādīt_laukumu(laukums);
+                Izvadīt("Neizšķirts!");
+                spēle_beigusies ir patiess;
+            } Citādi {
+                Ja(spēlētājs ir vienāds ar "X") {
+                    spēlētājs ir "O";
+                } Citādi {
+                    spēlētājs ir "X";
+                }
+            }
+        }
+    }
+}

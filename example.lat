@@ -1,0 +1,45 @@
+Mainīgais skaitlis x ir 14;
+Mainīgais teksts foo ir "bar";
+
+Funkcija summēt(skaitlis x_2, teksts bar) {
+    Mainīgais teksts summas_rezultāts ir x_2 + bar;
+    Atgriezt summas_rezultāts;
+}
+
+Izvadīt(summēt(x, foo));
+
+Mainīgais skaitlis sk1 ir 0;
+Kamēr(sk1 mazāks par 10) {
+    sk1 pieskaitīt 1;
+}
+
+Ja(sk1 ir vienāds ar 10) {
+    sk1 ir 67;
+}
+
+Izvadīt(sk1);
+
+// Masīvi var saturēt dažādu tipu vērtības un citus masīvus.
+Mainīgais masīvs skaitļi ir [2, 3, 5, 7];
+pievienot(skaitļi, 11);
+skaitļi[1] ir 30;
+skaitļi[0] pieskaitīt 8;
+
+Mainīgais skaitlis i ir 0;
+Mainīgais skaitlis summa ir 0;
+Kamēr(i mazāks par garums(skaitļi)) {
+    summa pieskaitīt skaitļi[i];
+    i pieskaitīt 1;
+}
+Izvadīt(skaitļi);
+Izvadīt("Summa: " + summa);
+
+Mainīgais loģisks pāra ir summa atlikums 2 ir vienāds ar 0;
+Ja(pāra un nav aplams) {
+    Izvadīt("Summa ir pāra skaitlis.");
+} Citādi {
+    Izvadīt("Summa ir nepāra skaitlis.");
+}
+
+Izvadīt("Noņemts: " + noņemt_pēdējo(skaitļi));
+Izvadīt("Garums: " + garums(skaitļi));

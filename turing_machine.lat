@@ -1,0 +1,151 @@
+// Universālas skaitļošanas pierādījums Latgalītei.
+//
+// Šis ir patvaļīgas determinētas vienas lentes Tjūringa mašīnas simulators.
+// Katra pāreja ir:
+//   [stāvoklis, nolasīts, ierakstāms, virziens, nākamais_stāvoklis]
+// Virziens ir "L" (pa kreisi), "R" (pa labi) vai "N" (palikt).
+// Tukšās lentes simbols ir "_".
+
+Funkcija tjūringa_mašīna(
+    masīvs pārejas,
+    teksts sākuma_stāvoklis,
+    teksts beigu_stāvoklis,
+    teksts ievade
+) {
+    // Divi dinamiski masīvi veido abos virzienos neierobežotu lenti.
+    // labā_lente[0] ir sākuma šūna; kreisā_lente[0] ir šūna pa kreisi no tās.
+    Mainīgais masīvs labā_lente ir [];
+    Mainīgais masīvs kreisā_lente ir [];
+
+    Mainīgais skaitlis i ir 0;
+    Kamēr(i mazāks par garums(ievade)) {
+        pievienot(labā_lente, ievade[i]);
+        i pieskaitīt 1;
+    }
+    Ja(garums(labā_lente) ir vienāds ar 0) {
+        pievienot(labā_lente, "_");
+    }
+
+    Mainīgais skaitlis galva ir 0;
+    Mainīgais skaitlis mazākā_pozīcija ir 0;
+    Mainīgais skaitlis lielākā_pozīcija ir garums(labā_lente) - 1;
+    Mainīgais teksts stāvoklis ir sākuma_stāvoklis;
+
+    Kamēr(nav (stāvoklis ir vienāds ar beigu_stāvoklis)) {
+        Mainīgais loģisks pa_kreisi ir galva mazāks par 0;
+        Mainīgais skaitlis lentes_indekss ir galva;
+        Ja(pa_kreisi) {
+            lentes_indekss ir 0 - galva - 1;
+        }
+
+        Mainīgais teksts simbols ir "_";
+        Ja(pa_kreisi) {
+            simbols ir kreisā_lente[lentes_indekss];
+        } Citādi {
+            simbols ir labā_lente[lentes_indekss];
+        }
+
+        Mainīgais loģisks pāreja_atrasta ir aplams;
+        Mainīgais skaitlis pārejas_indekss ir 0;
+
+        Kamēr(pārejas_indekss mazāks par garums(pārejas) un nav pāreja_atrasta) {
+            Mainīgais masīvs pāreja ir pārejas[pārejas_indekss];
+
+            Ja(pāreja[0] ir vienāds ar stāvoklis un pāreja[1] ir vienāds ar simbols) {
+                // Ieraksta jauno simbolu.
+                Ja(pa_kreisi) {
+                    kreisā_lente[lentes_indekss] ir pāreja[2];
+                } Citādi {
+                    labā_lente[lentes_indekss] ir pāreja[2];
+                }
+
+                // Maina stāvokli un pārvieto galvu.
+                stāvoklis ir pāreja[4];
+                Ja(pāreja[3] ir vienāds ar "L") {
+                    galva ir galva - 1;
+                }
+                Ja(pāreja[3] ir vienāds ar "R") {
+                    galva pieskaitīt 1;
+                }
+
+                // Pēc vajadzības pievieno jaunu tukšu šūnu jebkurā lentes galā.
+                Ja(galva mazāks par mazākā_pozīcija) {
+                    pievienot(kreisā_lente, "_");
+                    mazākā_pozīcija ir galva;
+                }
+                Ja(galva lielāks par lielākā_pozīcija) {
+                    pievienot(labā_lente, "_");
+                    lielākā_pozīcija ir galva;
+                }
+
+                pāreja_atrasta ir patiess;
+            }
+
+            pārejas_indekss pieskaitīt 1;
+        }
+
+        // Trūkstoša pāreja aptur mašīnu. Pareizi definētai mašīnai šo zaru nevajag.
+        Ja(nav pāreja_atrasta) {
+            stāvoklis ir beigu_stāvoklis;
+        }
+    }
+
+    // No rezultāta noņem apmeklētās, bet neizmantotās malas tukšās šūnas.
+    Mainīgais loģisks apgriezt_labo ir patiess;
+    Kamēr(apgriezt_labo un lielākā_pozīcija lielāks par mazākā_pozīcija) {
+        Mainīgais teksts malas_simbols ir "_";
+        Ja(lielākā_pozīcija mazāks par 0) {
+            malas_simbols ir kreisā_lente[0 - lielākā_pozīcija - 1];
+        } Citādi {
+            malas_simbols ir labā_lente[lielākā_pozīcija];
+        }
+        Ja(malas_simbols ir vienāds ar "_") {
+            lielākā_pozīcija ir lielākā_pozīcija - 1;
+        } Citādi {
+            apgriezt_labo ir aplams;
+        }
+    }
+
+    Mainīgais loģisks apgriezt_kreiso ir patiess;
+    Kamēr(apgriezt_kreiso un lielākā_pozīcija lielāks par mazākā_pozīcija) {
+        Mainīgais teksts malas_simbols ir "_";
+        Ja(mazākā_pozīcija mazāks par 0) {
+            malas_simbols ir kreisā_lente[0 - mazākā_pozīcija - 1];
+        } Citādi {
+            malas_simbols ir labā_lente[mazākā_pozīcija];
+        }
+        Ja(malas_simbols ir vienāds ar "_") {
+            mazākā_pozīcija pieskaitīt 1;
+        } Citādi {
+            apgriezt_kreiso ir aplams;
+        }
+    }
+
+    // Atgriež izmantoto lentes daļu no kreisās uz labo pusi.
+    Mainīgais teksts rezultāts ir "";
+    Mainīgais skaitlis pozīcija ir mazākā_pozīcija;
+    Kamēr(nav (pozīcija lielāks par lielākā_pozīcija)) {
+        Ja(pozīcija mazāks par 0) {
+            rezultāts pieskaitīt kreisā_lente[0 - pozīcija - 1];
+        } Citādi {
+            rezultāts pieskaitīt labā_lente[pozīcija];
+        }
+        pozīcija pieskaitīt 1;
+    }
+
+    Atgriezt rezultāts;
+}
+
+// Konkrēts piemērs: Tjūringa mašīna, kas bināram skaitlim pieskaita vienu.
+// "meklēt" aiziet līdz skaitļa beigām; "pārnese" realizē bināro pārnesi.
+Mainīgais masīvs binārais_plus_viens ir [
+    ["meklēt", "0", "0", "R", "meklēt"],
+    ["meklēt", "1", "1", "R", "meklēt"],
+    ["meklēt", "_", "_", "L", "pārnese"],
+    ["pārnese", "0", "1", "N", "beigas"],
+    ["pārnese", "1", "0", "L", "pārnese"],
+    ["pārnese", "_", "1", "N", "beigas"]
+];
+
+Izvadīt("1011 + 1 = " + tjūringa_mašīna(binārais_plus_viens, "meklēt", "beigas", "1011"));
+Izvadīt("1111 + 1 = " + tjūringa_mašīna(binārais_plus_viens, "meklēt", "beigas", "1111"));
