@@ -28,6 +28,72 @@ Izvadīt("Ievadi savu vārdu:");
 Mainīgais teksts vārds ir ievadīt();
 ```
 
+Numeric text is converted automatically when assigned to a `skaitlis` variable:
+
+```latgalite
+Izvadīt("Ievadi skaitli:");
+Mainīgais skaitlis vērtība ir ievadīt();
+```
+
+### `ievadīt_skaitli()`
+
+Reads one line and returns it as a number. This form is useful when the input is
+used directly in an expression:
+
+```latgalite
+Mainīgais skaitlis summa ir ievadīt_skaitli() + ievadīt_skaitli();
+```
+
+Numeric input may have surrounding whitespace, an optional `+` or `-`, and a
+decimal part. Both `12.5` and the Latvian-style `12,5` are accepted. Empty,
+malformed, out-of-range, and non-finite inputs produce a runtime error;
+`ievadīt_skaitli()` also reports end-of-file as an error.
+
+## Text
+
+Text functions operate on UTF-8 byte sequences, consistently with text indexing
+and `garums`.
+
+### `saskaldīt(text, separator)`
+
+Splits text at every occurrence of a non-empty separator and returns an array of
+text pieces. Consecutive and trailing separators produce empty pieces:
+
+```latgalite
+Mainīgais masīvs daļas ir saskaldīt("viens,,trīs,", ",");
+// ["viens", "", "trīs", ""]
+```
+
+### `savienot(array, separator)`
+
+Joins the displayed representation of every array element with text between
+them. An empty array produces empty text.
+
+```latgalite
+Izvadīt(savienot(["viens", "divi", 3], ", "));
+// viens, divi, 3
+```
+
+### `satur(text, fragment)`
+
+Returns `patiess` when the exact fragment occurs in the text, otherwise
+`aplams`. Every text contains the empty fragment.
+
+### `atrast(text, fragment)`
+
+Returns the zero-based byte index of the fragment's first occurrence, or `-1`
+when it is absent.
+
+### `aizstāt(text, fragment, replacement)`
+
+Returns new text with every non-overlapping occurrence of a non-empty fragment
+replaced. The original text is unchanged.
+
+```latgalite
+Izvadīt(aizstāt("2026-07-20", "-", "/"));
+// 2026/07/20
+```
+
 ## Arrays and lengths
 
 ### `garums(value)`
@@ -85,6 +151,12 @@ Izvadīt(rakstzīme(65)); // A
 | --- | --- | --- |
 | `Izvadīt(value)` | Any value | Writes a line |
 | `ievadīt()` | None | Text line |
+| `ievadīt_skaitli()` | None | Number |
+| `saskaldīt(text, separator)` | Two texts | Array of text pieces |
+| `savienot(array, separator)` | Array and text | Text |
+| `satur(text, fragment)` | Two texts | Boolean |
+| `atrast(text, fragment)` | Two texts | Byte index or `-1` |
+| `aizstāt(text, fragment, replacement)` | Three texts | Text |
 | `garums(value)` | Array or text | Number |
 | `pievienot(array, value)` | Array, any value | New length |
 | `noņemt_pēdējo(array)` | Non-empty array | Removed value |

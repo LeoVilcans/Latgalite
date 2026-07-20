@@ -20,7 +20,8 @@ flowchart LR
 | `lexer.h`, `lexer.cpp` | Source scanning, keywords, literals, and comments |
 | `interpreter.h`, `interpreter.cpp` | AST definitions, parser, environments, functions, built-ins, and evaluation |
 | `main.cpp` | Command-line file/stdin handling and error reporting |
-| `CMakeLists.txt` | C++20 build configuration |
+| `tests/interpreter_tests.cpp` | Dependency-free interpreter regression tests |
+| `CMakeLists.txt` | C++20 build and CTest configuration |
 
 ## Lexer
 
@@ -71,8 +72,8 @@ before general binary evaluation to preserve short-circuit behavior. Assignments
 resolve either a named variable or a nested indexed array target.
 
 Built-ins are dispatched by function name in `Runtime::evaluateCall`. Language
-statements such as `Izvadīt`, `Ja`, and `Kamēr` have dedicated AST statement
-kinds instead.
+statements such as `Izvadīt`, `Ja`, `Kamēr`, and `Salīdzini` have dedicated AST
+statement kinds instead.
 
 ## Extending the language
 
@@ -83,7 +84,8 @@ The usual steps for adding syntax are:
 2. Teach `lexer.cpp` to produce it.
 3. Add the corresponding parser rule or AST kind in `interpreter.cpp`.
 4. Implement its runtime semantics.
-5. Add a `.lat` example and document the behavior and error cases.
+5. Add regression coverage for its behavior and error cases.
+6. Add a `.lat` example and document the syntax.
 
 For a normal function-like operation, only a new branch in
 `Runtime::evaluateCall` may be necessary. Keep built-in argument validation close

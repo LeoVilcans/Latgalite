@@ -14,6 +14,8 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords_ = {
     {"Funkcija", TokenType::Funkcija},
     {"Ja", TokenType::Ja},
     {"Kamēr", TokenType::Kamer},
+    {"Salīdzini", TokenType::Salidzini},
+    {"Sakrīt", TokenType::Sakrit},
     {"Atgriezt", TokenType::Atgriezt},
     {"Citādi", TokenType::Citadi},
 
@@ -103,6 +105,10 @@ void Lexer::scanToken()
 
         case ',':
             addToken(TokenType::Comma);
+            break;
+
+        case ':':
+            addToken(TokenType::Colon);
             break;
 
         case ';':

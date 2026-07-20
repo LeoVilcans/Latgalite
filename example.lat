@@ -19,6 +19,15 @@ Ja(sk1 ir vienāds ar 10) {
 
 Izvadīt(sk1);
 
+Salīdzini(sk1) {
+    Sakrīt ar 10:
+        Izvadīt("Vērtība ir desmit.");
+    Sakrīt ar 67:
+        Izvadīt("Vērtība ir sešdesmit septiņi.");
+    Citādi:
+        Izvadīt("Vērtība nav pazīstama.");
+}
+
 // Masīvi var saturēt dažādu tipu vērtības un citus masīvus.
 Mainīgais masīvs skaitļi ir [2, 3, 5, 7];
 pievienot(skaitļi, 11);
@@ -43,3 +52,7 @@ Ja(pāra un nav aplams) {
 
 Izvadīt("Noņemts: " + noņemt_pēdējo(skaitļi));
 Izvadīt("Garums: " + garums(skaitļi));
+
+Mainīgais masīvs vārdi ir saskaldīt("viens,divi,trīs", ",");
+Izvadīt(savienot(vārdi, " | "));
+Izvadīt(aizstāt("sarkans, sarkans", "sarkans", "zaļš"));

@@ -48,6 +48,18 @@ Mainīgais teksts vārds ir ievadīt();
 Izvadīt("Sveiks, " + vārds + "!");
 ```
 
+Input can be converted by a numeric declaration, or read directly as a number
+with `ievadīt_skaitli()`:
+
+```latgalite
+Izvadīt("Ievadi divus skaitļus:");
+Mainīgais skaitlis pirmais ir ievadīt();
+Mainīgais skaitlis summa ir pirmais + ievadīt_skaitli();
+Izvadīt("Summa: " + summa);
+```
+
+Numeric input accepts either `.` or `,` as its decimal separator.
+
 Run interactive programs by passing their filename:
 
 ```bash
@@ -55,7 +67,8 @@ Run interactive programs by passing their filename:
 ```
 
 If the program source itself is piped through standard input, that stream is
-already exhausted when execution begins, so `ievadīt()` returns an empty string.
+already exhausted when execution begins, so `ievadīt()` returns an empty string
+and `ievadīt_skaitli()` reports an end-of-file runtime error.
 
 ## Errors and exit codes
 

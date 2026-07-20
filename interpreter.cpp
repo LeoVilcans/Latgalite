@@ -1,6 +1,7 @@
 #include "interpreter.h"
 #include "lexer.h"
 
+#include <cctype>
 #include <cmath>
 #include <memory>
 #include <istream>
@@ -43,6 +44,10 @@ std::string show(const Value& value) {
     std::ostringstream out; out << number; return out.str();
 }
 
+bool valuesEqual(const Value& left, const Value& right) {
+    return show(left) == show(right);
+}
+
 struct Expr {
     enum class Kind { Literal, Variable, Binary, Unary, Call, Array, Index } kind;
     Token token{};
@@ -52,15 +57,23 @@ struct Expr {
 };
 using ExprPtr = std::shared_ptr<Expr>;
 
+struct Stmt;
+using StmtPtr = std::shared_ptr<Stmt>;
+
+struct SwitchArm {
+    ExprPtr expression;
+    std::vector<StmtPtr> body;
+};
+
 struct Stmt {
-    enum class Kind { Variable, Function, Print, While, If, Return, Assign, AddAssign, Expression } kind;
+    enum class Kind { Variable, Function, Print, While, If, Switch, Return, Assign, AddAssign, Expression } kind;
     Token token{};
     TokenType declaredType{TokenType::Invalid};
     ExprPtr expression, target;
-    std::vector<std::shared_ptr<Stmt>> body, elseBody;
+    std::vector<StmtPtr> body, elseBody;
+    std::vector<SwitchArm> switchArms;
     std::vector<std::pair<TokenType, Token>> parameters;
 };
-using StmtPtr = std::shared_ptr<Stmt>;
 
 class Parser {
 public:
@@ -75,6 +88,7 @@ private:
     const Token& peek() const { return tokens_[current_]; }
     const Token& previous() const { return tokens_[current_ - 1]; }
     bool check(TokenType type) const { return peek().type == type; }
+    bool checkNext(TokenType type) const { return current_ + 1 < tokens_.size() && tokens_[current_ + 1].type == type; }
     bool match(TokenType type) { if (!check(type)) return false; ++current_; return true; }
     Token consume(TokenType type, const std::string& message) {
         if (check(type)) return tokens_[current_++];
@@ -97,6 +111,7 @@ private:
         if (match(TokenType::Izvadit)) return printStatement();
         if (match(TokenType::Kamer)) return controlStatement(Stmt::Kind::While);
         if (match(TokenType::Ja)) return controlStatement(Stmt::Kind::If);
+        if (match(TokenType::Salidzini)) return switchStatement();
         if (match(TokenType::Atgriezt)) {
             auto stmt = std::make_shared<Stmt>(); stmt->kind = Stmt::Kind::Return; stmt->token = previous();
             stmt->expression = expression(); consume(TokenType::Semicolon, "Expected ';' after return value."); return stmt;
@@ -137,11 +152,47 @@ private:
         consume(TokenType::LeftParenthesis, "Expected '(' after 'Izvadīt'."); stmt->expression = expression();
         consume(TokenType::RightParenthesis, "Expected ')'."); consume(TokenType::Semicolon, "Expected ';'."); return stmt;
     }
+    std::vector<StmtPtr> switchArmBody() {
+        std::vector<StmtPtr> result;
+        while (!check(TokenType::Sakrit) && !check(TokenType::Citadi) &&
+               !check(TokenType::RightBrace) && !check(TokenType::EndOfFile)) {
+            result.push_back(statement());
+        }
+        return result;
+    }
+    StmtPtr switchStatement() {
+        auto stmt = std::make_shared<Stmt>(); stmt->kind = Stmt::Kind::Switch; stmt->token = previous();
+        consume(TokenType::LeftParenthesis, "Expected '(' after 'Salīdzini'."); stmt->expression = expression();
+        consume(TokenType::RightParenthesis, "Expected ')' after comparison value.");
+        consume(TokenType::LeftBrace, "Expected '{' before comparison branches.");
+
+        bool hasBranch = false;
+        bool hasDefault = false;
+        while (!check(TokenType::RightBrace) && !check(TokenType::EndOfFile)) {
+            if (match(TokenType::Sakrit)) {
+                if (hasDefault) throw parseError(previous(), "'Citādi' must be the final comparison branch.");
+                SwitchArm arm;
+                consume(TokenType::Ar, "Expected 'ar' after 'Sakrīt'."); arm.expression = expression();
+                consume(TokenType::Colon, "Expected ':' after matching value."); arm.body = switchArmBody();
+                stmt->switchArms.push_back(std::move(arm)); hasBranch = true; continue;
+            }
+            if (match(TokenType::Citadi)) {
+                if (hasDefault) throw parseError(previous(), "A comparison can have only one 'Citādi' branch.");
+                consume(TokenType::Colon, "Expected ':' after 'Citādi'.");
+                stmt->elseBody = switchArmBody(); hasDefault = true; continue;
+            }
+            throw parseError(peek(), "Expected 'Sakrīt ar', 'Citādi', or '}'.");
+        }
+        if (!hasBranch && !hasDefault) throw parseError(peek(), "Expected at least one comparison branch.");
+        consume(TokenType::RightBrace, "Expected '}' after comparison branches."); return stmt;
+    }
     StmtPtr controlStatement(Stmt::Kind kind) {
         auto stmt = std::make_shared<Stmt>(); stmt->kind = kind; stmt->token = previous();
         consume(TokenType::LeftParenthesis, "Expected '('."); stmt->expression = expression();
         consume(TokenType::RightParenthesis, "Expected ')'."); stmt->body = block();
-        if (kind == Stmt::Kind::If && match(TokenType::Citadi)) stmt->elseBody = block();
+        if (kind == Stmt::Kind::If && check(TokenType::Citadi) && checkNext(TokenType::LeftBrace)) {
+            match(TokenType::Citadi); stmt->elseBody = block();
+        }
         return stmt;
     }
     std::vector<StmtPtr> block() {
@@ -256,6 +307,44 @@ private:
         if (const auto* n = std::get_if<double>(&value.data)) return *n;
         runtimeError(token, "Expected a number.");
     }
+    static std::string text(const Value& value, const Token& token, const std::string& functionName) {
+        if (const auto* result = std::get_if<std::string>(&value.data)) return *result;
+        runtimeError(token, functionName + " expects text arguments.");
+    }
+    static double parseNumberText(const std::string& input, const Token& token) {
+        std::size_t begin = 0;
+        while (begin < input.size() && std::isspace(static_cast<unsigned char>(input[begin]))) ++begin;
+        std::size_t end = input.size();
+        while (end > begin && std::isspace(static_cast<unsigned char>(input[end - 1]))) --end;
+
+        std::string normalized = input.substr(begin, end - begin);
+        std::size_t position = 0;
+        if (position < normalized.size() && (normalized[position] == '+' || normalized[position] == '-')) ++position;
+
+        bool hasDigit = false;
+        while (position < normalized.size() && std::isdigit(static_cast<unsigned char>(normalized[position]))) {
+            hasDigit = true; ++position;
+        }
+        if (position < normalized.size() && (normalized[position] == '.' || normalized[position] == ',')) {
+            normalized[position] = '.'; ++position;
+            while (position < normalized.size() && std::isdigit(static_cast<unsigned char>(normalized[position]))) {
+                hasDigit = true; ++position;
+            }
+        }
+        if (!hasDigit || position != normalized.size()) {
+            runtimeError(token, "Cannot convert '" + input + "' to a number.");
+        }
+
+        try {
+            double result = std::stod(normalized);
+            if (!std::isfinite(result)) runtimeError(token, "The entered number must be finite.");
+            return result;
+        } catch (const std::invalid_argument&) {
+            runtimeError(token, "Cannot convert '" + input + "' to a number.");
+        } catch (const std::out_of_range&) {
+            runtimeError(token, "The entered number is outside the supported range.");
+        }
+    }
     static ArrayPtr array(const Value& value, const Token& token) {
         if (const auto* a = std::get_if<ArrayPtr>(&value.data)) return *a;
         runtimeError(token, "Expected an array.");
@@ -267,7 +356,11 @@ private:
     }
     static Value convert(TokenType type, const Value& value, const Token& token) {
         if (type == TokenType::Teksts) return show(value);
-        if (type == TokenType::Skaitlis && !std::holds_alternative<double>(value.data)) runtimeError(token, "A 'skaitlis' variable requires a number.");
+        if (type == TokenType::Skaitlis) {
+            if (std::holds_alternative<double>(value.data)) return value;
+            if (const auto* input = std::get_if<std::string>(&value.data)) return parseNumberText(*input, token);
+            runtimeError(token, "A 'skaitlis' variable requires a number or numeric text.");
+        }
         if (type == TokenType::Logisks && !std::holds_alternative<bool>(value.data)) runtimeError(token, "A 'loģisks' variable requires 'patiess' or 'aplams'.");
         if (type == TokenType::Masivs && !std::holds_alternative<ArrayPtr>(value.data)) runtimeError(token, "A 'masīvs' variable requires an array.");
         return value;
@@ -278,6 +371,77 @@ private:
             std::string line;
             if (!std::getline(input_, line)) return std::string("");
             return line;
+        }
+        if (expr->token.text == "ievadīt_skaitli") {
+            if (!expr->arguments.empty()) runtimeError(expr->token, "ievadīt_skaitli expects no arguments.");
+            std::string line;
+            if (!std::getline(input_, line)) runtimeError(expr->token, "ievadīt_skaitli reached the end of input.");
+            return parseNumberText(line, expr->token);
+        }
+        if (expr->token.text == "saskaldīt") {
+            if (expr->arguments.size() != 2) runtimeError(expr->token, "saskaldīt expects text and a separator.");
+            Value sourceValue = evaluate(expr->arguments[0], env);
+            Value separatorValue = evaluate(expr->arguments[1], env);
+            const std::string source = text(sourceValue, expr->token, "saskaldīt");
+            const std::string separator = text(separatorValue, expr->token, "saskaldīt");
+            if (separator.empty()) runtimeError(expr->token, "saskaldīt requires a non-empty separator.");
+
+            auto result = std::make_shared<Array>();
+            std::size_t begin = 0;
+            while (true) {
+                const std::size_t found = source.find(separator, begin);
+                if (found == std::string::npos) { result->push_back(source.substr(begin)); break; }
+                result->push_back(source.substr(begin, found - begin)); begin = found + separator.size();
+            }
+            return result;
+        }
+        if (expr->token.text == "savienot") {
+            if (expr->arguments.size() != 2) runtimeError(expr->token, "savienot expects an array and a separator.");
+            ArrayPtr values = array(evaluate(expr->arguments[0], env), expr->token);
+            Value separatorValue = evaluate(expr->arguments[1], env);
+            const std::string separator = text(separatorValue, expr->token, "savienot");
+            std::string result;
+            for (std::size_t i = 0; i < values->size(); ++i) {
+                if (i) result += separator;
+                result += show((*values)[i]);
+            }
+            return result;
+        }
+        if (expr->token.text == "satur") {
+            if (expr->arguments.size() != 2) runtimeError(expr->token, "satur expects text and a fragment.");
+            Value sourceValue = evaluate(expr->arguments[0], env);
+            Value fragmentValue = evaluate(expr->arguments[1], env);
+            const std::string source = text(sourceValue, expr->token, "satur");
+            const std::string fragment = text(fragmentValue, expr->token, "satur");
+            return source.find(fragment) != std::string::npos;
+        }
+        if (expr->token.text == "atrast") {
+            if (expr->arguments.size() != 2) runtimeError(expr->token, "atrast expects text and a fragment.");
+            Value sourceValue = evaluate(expr->arguments[0], env);
+            Value fragmentValue = evaluate(expr->arguments[1], env);
+            const std::string source = text(sourceValue, expr->token, "atrast");
+            const std::string fragment = text(fragmentValue, expr->token, "atrast");
+            const std::size_t found = source.find(fragment);
+            return found == std::string::npos ? -1.0 : static_cast<double>(found);
+        }
+        if (expr->token.text == "aizstāt") {
+            if (expr->arguments.size() != 3) runtimeError(expr->token, "aizstāt expects text, a fragment, and its replacement.");
+            Value sourceValue = evaluate(expr->arguments[0], env);
+            Value fragmentValue = evaluate(expr->arguments[1], env);
+            Value replacementValue = evaluate(expr->arguments[2], env);
+            const std::string source = text(sourceValue, expr->token, "aizstāt");
+            const std::string fragment = text(fragmentValue, expr->token, "aizstāt");
+            const std::string replacement = text(replacementValue, expr->token, "aizstāt");
+            if (fragment.empty()) runtimeError(expr->token, "aizstāt requires a non-empty fragment.");
+
+            std::string result;
+            std::size_t begin = 0;
+            while (true) {
+                const std::size_t found = source.find(fragment, begin);
+                if (found == std::string::npos) { result += source.substr(begin); break; }
+                result += source.substr(begin, found - begin); result += replacement; begin = found + fragment.size();
+            }
+            return result;
         }
         if (expr->token.text == "garums") {
             if (expr->arguments.size() != 1) runtimeError(expr->token, "garums expects one argument.");
@@ -357,7 +521,7 @@ private:
             case TokenType::Atlikums: { double divisor = number(right, expr->token); if (divisor == 0) runtimeError(expr->token, "Division by zero."); return std::fmod(number(left, expr->token), divisor); }
             case TokenType::Mazaks: return number(left, expr->token) < number(right, expr->token);
             case TokenType::Greater: return number(left, expr->token) > number(right, expr->token);
-            case TokenType::Ir: return show(left) == show(right);
+            case TokenType::Ir: return valuesEqual(left, right);
             default: runtimeError(expr->token, "Unknown operator '" + expr->token.text + "'.");
         }
     }
@@ -374,6 +538,14 @@ private:
             case Stmt::Kind::Print: output_ << show(evaluate(stmt->expression, env)) << '\n'; break;
             case Stmt::Kind::While: while (truthy(evaluate(stmt->expression, env))) { auto child = std::make_shared<Environment>(); child->parent = env; executeBlock(stmt->body, child); } break;
             case Stmt::Kind::If: { auto child = std::make_shared<Environment>(); child->parent = env; executeBlock(truthy(evaluate(stmt->expression, env)) ? stmt->body : stmt->elseBody, child); break; }
+            case Stmt::Kind::Switch: {
+                Value compared = evaluate(stmt->expression, env);
+                const std::vector<StmtPtr>* selected = &stmt->elseBody;
+                for (const auto& arm : stmt->switchArms) {
+                    if (valuesEqual(compared, evaluate(arm.expression, env))) { selected = &arm.body; break; }
+                }
+                auto child = std::make_shared<Environment>(); child->parent = env; executeBlock(*selected, child); break;
+            }
             case Stmt::Kind::Return: throw ReturnSignal{evaluate(stmt->expression, env)};
             case Stmt::Kind::Assign: {
                 Value value = evaluate(stmt->expression, env);

@@ -50,9 +50,10 @@ punkti ir 15;
 ```
 
 Assignments enforce the variable's declared type. Assigning any value to a
-`teksts` variable converts it to its displayed representation; the other types
-require a matching value. Individual elements of heterogeneous arrays do not
-have declared types.
+`teksts` variable converts it to its displayed representation. A `skaitlis`
+accepts a number or valid numeric text, which makes
+`Mainīgais skaitlis x ir ievadīt();` possible; the other types require a matching
+value. Individual elements of heterogeneous arrays do not have declared types.
 
 ## Arrays
 
@@ -164,6 +165,31 @@ Kamēr(punkti mazāks par 20) {
 `Citādi` is optional. Blocks create child scopes; assignment can update a
 variable found in an enclosing scope.
 
+## Multi-way selection
+
+Use `Salīdzini` when one value should select among several branches:
+
+```latgalite
+Salīdzini(komanda) {
+    Sakrīt ar "sākt":
+        Izvadīt("Sākam!");
+    Sakrīt ar "beigt":
+        Izvadīt("Beidzam.");
+    Citādi:
+        Izvadīt("Nezināma komanda.");
+}
+```
+
+`Salīdzini` evaluates its value once, then evaluates the `Sakrīt ar` values in
+source order. The first equal value selects its branch; later branches do not
+run, so no separate `break` statement is needed. Equality follows the same
+displayed-value comparison as `ir vienāds ar`.
+
+The optional `Citādi` branch runs when no value matches and must be last. If it
+is omitted and nothing matches, the statement does nothing. A selected branch
+has its own child scope, like a `Ja` block. Statements inside a branch retain
+their usual semicolons, while branch labels end with `:`.
+
 ## Functions
 
 Functions have typed parameters and dynamically typed return values:
@@ -193,5 +219,5 @@ pievienot(vērtības, 40);
 ```
 
 Declarations, assignments, returns, output calls, and expression statements end
-with `;`. Blocks, function declarations, `Ja`, and `Kamēr` do not take a trailing
-semicolon.
+with `;`. Blocks, function declarations, `Ja`, `Kamēr`, and `Salīdzini` do not
+take a trailing semicolon.

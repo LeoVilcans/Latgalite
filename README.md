@@ -18,7 +18,8 @@ Izvadīt("Summa: " + summa);
 ```
 
 The interpreter supports typed variables, functions, arrays, conditionals,
-loops, interactive input, arithmetic, text operations, and boolean logic.
+multi-way selection, loops, interactive input, arithmetic, text operations,
+and boolean logic.
 
 ## Build
 
@@ -27,6 +28,12 @@ Latgalīte requires a C++20 compiler and CMake 3.16 or newer.
 ```bash
 cmake -S . -B build
 cmake --build build
+```
+
+Run the regression tests with:
+
+```bash
+ctest --test-dir build --output-on-failure
 ```
 
 Run a source file:
@@ -44,9 +51,16 @@ Source can also be read from standard input:
 Use the file form for interactive programs, because `ievadīt()` reads from the
 same standard-input stream.
 
+## VS Code support
+
+A syntax-highlighting extension for `.lat` files is included in
+[`vscode-extension`](vscode-extension). See its
+[`README`](vscode-extension/README.md) for development-host and local
+installation instructions.
+
 ## Included programs
 
-- [`example.lat`](example.lat) demonstrates the core syntax and arrays.
+- [`example.lat`](example.lat) demonstrates the core syntax, arrays, and text helpers.
 - [`desas.lat`](desas.lat) is an interactive two-player tic-tac-toe game.
 - [`turing_machine.lat`](turing_machine.lat) implements a generic Turing-machine
   simulator.

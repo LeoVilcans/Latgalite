@@ -1,0 +1,41 @@
+{
+  "name": "latgalite-language-support",
+  "displayName": "Latgalīte Language Support",
+  "description": "Syntax highlighting and editor support for the Latgalīte programming language.",
+  "version": "0.1.0",
+  "publisher": "latgalite-project",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "latgalite",
+    "latgalīte",
+    "language",
+    "syntax-highlighting"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "latgalite",
+        "aliases": [
+          "Latgalīte",
+          "Latgalite"
+        ],
+        "extensions": [
+          ".lat"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "latgalite",
+        "scopeName": "source.latgalite",
+        "path": "./syntaxes/latgalite.tmLanguage.json"
+      }
+    ]
+  }
+}

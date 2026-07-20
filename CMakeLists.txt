@@ -10,3 +10,14 @@ add_executable(Latgalite main.cpp
         lexer.cpp
         interpreter.h
         interpreter.cpp)
+
+include(CTest)
+
+if(BUILD_TESTING)
+    add_executable(LatgaliteTests
+            tests/interpreter_tests.cpp
+            lexer.cpp
+            interpreter.cpp)
+    target_include_directories(LatgaliteTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME LatgaliteBuiltins COMMAND LatgaliteTests)
+endif()

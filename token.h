@@ -43,6 +43,8 @@ enum class TokenType {
     Funkcija,
     Ja,
     Kamer,
+    Salidzini,
+    Sakrit,
     Atgriezt,
     Ir,
     Mazaks,
@@ -75,6 +77,7 @@ enum class TokenType {
     LeftBrace, // {
     RightBrace, // }
     Comma, // ,
+    Colon, // :
     Semicolon, // ;
 
     // special
